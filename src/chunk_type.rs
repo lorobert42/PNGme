@@ -1,61 +1,59 @@
+use anyhow::{Error, Result, anyhow};
 use std::{fmt::Display, str::FromStr};
 
-#[derive(Debug, PartialEq)]
-struct ChunkType {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChunkType {
     bytes: [u8; 4],
 }
 
 impl ChunkType {
-    fn bytes(&self) -> [u8; 4] {
+    pub fn bytes(&self) -> [u8; 4] {
         self.bytes
     }
 
-    fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         !self.bytes.iter().any(|b| !b.is_ascii_alphabetic()) && self.is_reserved_bit_valid()
     }
 
-    fn is_critical(&self) -> bool {
+    pub fn is_critical(&self) -> bool {
         self.bytes[0].is_ascii_uppercase()
     }
 
-    fn is_public(&self) -> bool {
+    pub fn is_public(&self) -> bool {
         self.bytes[1].is_ascii_uppercase()
     }
 
-    fn is_reserved_bit_valid(&self) -> bool {
+    pub fn is_reserved_bit_valid(&self) -> bool {
         self.bytes[2].is_ascii_uppercase()
     }
 
-    fn is_safe_to_copy(&self) -> bool {
+    pub fn is_safe_to_copy(&self) -> bool {
         self.bytes[3].is_ascii_lowercase()
     }
 }
 
 impl TryFrom<[u8; 4]> for ChunkType {
-    type Error = &'static str;
+    type Error = Error;
 
-    fn try_from(value: [u8; 4]) -> Result<Self, Self::Error> {
+    fn try_from(value: [u8; 4]) -> Result<Self> {
         if value.iter().any(|b| !b.is_ascii_alphabetic()) {
-            Err("All bytes must be alphabetic.")
+            Err(anyhow!("All bytes must be alphabetic."))
         } else {
             Ok(ChunkType { bytes: value })
         }
     }
 }
 
-#[derive(Debug)]
-struct ParseChunkTypeError;
-
 impl FromStr for ChunkType {
-    type Err = ParseChunkTypeError;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         let mut chunk = [0; 4];
         s.chars().enumerate().for_each(|(i, c)| {
             chunk[i] = c as u8;
         });
         if chunk.iter().any(|b| !b.is_ascii_alphabetic()) {
-            Err(ParseChunkTypeError)
+            Err(anyhow!("All bytes must be alphabetic."))
         } else {
             Ok(ChunkType { bytes: chunk })
         }

@@ -1,9 +1,10 @@
 use anyhow::{Error, Result, anyhow};
-use std::fmt::Display;
+use std::{fmt::Display, io::Read};
 
 use crate::chunk_type::ChunkType;
 
-struct Chunk {
+#[derive(Debug, Clone)]
+pub struct Chunk {
     length: u32,
     chunk_type: ChunkType,
     chunk_data: Vec<u8>,
@@ -11,14 +12,14 @@ struct Chunk {
 }
 
 impl Chunk {
-    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
+    pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
         let length = u32::try_from(data.len()).unwrap();
         let mut chunk = chunk_type.bytes().to_vec().clone();
         let mut res = data.clone();
         chunk.append(&mut res);
-        let crc: u32 = Chunk::compute_crc(&chunk);
+        let crc: u32 = Self::compute_crc(&chunk);
 
-        Chunk {
+        Self {
             length,
             chunk_type,
             chunk_data: data,
@@ -26,31 +27,36 @@ impl Chunk {
         }
     }
 
-    fn length(&self) -> u32 {
+    pub fn length(&self) -> u32 {
         self.length
     }
 
-    fn chunk_type(&self) -> &ChunkType {
+    pub fn chunk_type(&self) -> &ChunkType {
         &self.chunk_type
     }
 
-    fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8] {
         &self.chunk_data
     }
 
-    fn crc(&self) -> u32 {
+    pub fn crc(&self) -> u32 {
         self.crc
     }
 
-    fn data_as_string(&self) -> Result<String> {
-        println!("Data: {:#?}", self.chunk_data);
+    pub fn data_as_string(&self) -> Result<String> {
         let s = std::str::from_utf8(&self.chunk_data)?;
-        println!("Data_as_string: {s}");
         Ok(s.to_string())
     }
 
-    fn as_bytes(&self) -> Vec<u8> {
-        self.chunk_data.clone()
+    pub fn as_bytes(&self) -> Vec<u8> {
+        self.length
+            .to_be_bytes()
+            .iter()
+            .chain(self.chunk_type.bytes().iter())
+            .chain(self.chunk_data.iter())
+            .chain(self.crc.to_be_bytes().iter())
+            .copied()
+            .collect()
     }
 
     fn compute_crc(data: &[u8]) -> u32 {
@@ -63,25 +69,19 @@ impl TryFrom<&[u8]> for Chunk {
     type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
-        // println!("Value: {value:#?}");
-
         let length = <[u8; 4]>::try_from(&value[0..4])?;
         let length = u32::from_be_bytes(length);
-        // println!("Length: {length}");
 
         let chunk_type = <[u8; 4]>::try_from(&value[4..8])?;
         let chunk_type = ChunkType::try_from(chunk_type)?;
-        // println!("Type: {chunk_type}");
 
         let chunk_data = value[8..value.len() - 4].to_vec();
-        // println!("Data: {chunk_data:#?}");
 
         let crc = <[u8; 4]>::try_from(&value[value.len() - 4..value.len()])?;
         let crc = u32::from_be_bytes(crc);
-        if crc != Chunk::compute_crc(&value[4..value.len() - 4]) {
+        if crc != Self::compute_crc(&value[4..value.len() - 4]) {
             return Err(anyhow!("Invalid CRC."));
         }
-        // println!("CRC: {crc}");
 
         Ok(Chunk {
             length,

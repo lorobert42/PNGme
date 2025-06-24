@@ -1,5 +1,5 @@
 use anyhow::{Error, Result, anyhow};
-use std::{fmt::Display, io::Read};
+use std::{fmt::Display, io::Read, str};
 
 use crate::chunk_type::ChunkType;
 
@@ -93,11 +93,12 @@ impl TryFrom<&[u8]> for Chunk {
 }
 
 impl Display for Chunk {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        let message = str::from_utf8(&self.chunk_data).unwrap();
         write!(
             f,
-            "{} {} {:?} {}",
-            self.length, self.chunk_type, self.chunk_data, self.crc
+            "{} {} {} {}",
+            self.length, self.chunk_type, message, self.crc
         )
     }
 }

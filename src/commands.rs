@@ -17,13 +17,13 @@ pub fn encode(
     let mut png = Png::try_from(&data[..])?;
     let chunk = Chunk::new(chunk_type.clone(), message.as_bytes().to_vec());
     png.append_chunk(chunk);
-    match output {
-        Some(path) => {
-            let mut ofile = File::create(path)?;
-            ofile.write_all(&png.as_bytes()[..])?;
-        }
-        None => println!("{png}"),
+    let mut ofile;
+    if let Some(path) = output {
+        ofile = File::create(path)?;
+    } else {
+        ofile = File::create("res".to_string() + filename)?;
     }
+    ofile.write_all(&png.as_bytes())?;
     Ok(())
 }
 

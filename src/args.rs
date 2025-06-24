@@ -23,7 +23,7 @@ pub enum Commands {
     },
     Remove {
         path: String,
-        chunk_type: ChunkType,
+        chunk_type: String,
     },
     Print {
         path: String,

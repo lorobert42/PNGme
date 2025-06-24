@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, File},
+    fs::{self, File, OpenOptions},
     io::Write,
 };
 
@@ -35,5 +35,17 @@ pub fn decode(filename: &String, chunk_type: &str) -> Result<()> {
         Some(chunk) => println!("{chunk}"),
         None => return Err(anyhow!("Chunk not found.")),
     }
+    Ok(())
+}
+
+pub fn remove(filename: &String, chunk_type: &str) -> Result<()> {
+    let data: Vec<u8> = fs::read(filename)?;
+    let mut png = Png::try_from(&data[..])?;
+    png.remove_first_chunk(chunk_type)?;
+    let mut ofile = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(filename)?;
+    ofile.write_all(&png.as_bytes())?;
     Ok(())
 }

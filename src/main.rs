@@ -1,5 +1,5 @@
 use clap::Parser;
-use commands::{decode, encode, remove};
+use commands::{decode, encode, print, remove};
 mod args;
 mod chunk;
 mod chunk_type;
@@ -21,6 +21,7 @@ fn main() -> Result<()> {
         }) => encode(path, chunk_type, message, output.as_ref())?,
         Some(args::Commands::Decode { path, chunk_type }) => decode(path, chunk_type)?,
         Some(args::Commands::Remove { path, chunk_type }) => remove(path, chunk_type)?,
+        Some(args::Commands::Print { path }) => print(path)?,
         _ => {}
     }
 

@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     fs::{self, File, OpenOptions},
     io::Write,
 };
@@ -47,5 +48,14 @@ pub fn remove(filename: &String, chunk_type: &str) -> Result<()> {
         .truncate(true)
         .open(filename)?;
     ofile.write_all(&png.as_bytes())?;
+    Ok(())
+}
+
+pub fn print(filename: &String) -> Result<()> {
+    let data: Vec<u8> = fs::read(filename)?;
+    let png = Png::try_from(&data[..])?;
+    png.chunks()
+        .iter()
+        .for_each(|c| println!("{}", c.chunk_type()));
     Ok(())
 }

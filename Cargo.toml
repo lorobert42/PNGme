@@ -1,5 +1,7 @@
 [package]
 name = "pngme"
+description = "A command line program that lets you hide secret messages in PNG files."
+authors = ["lorobert42"]
 version = "0.1.0"
 edition = "2024"
 

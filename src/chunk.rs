@@ -1,16 +1,17 @@
 use anyhow::{Error, Result, anyhow};
-use std::{fmt::Display, io::Read, str};
+use std::{fmt::Display, str};
 
 use crate::chunk_type::ChunkType;
 
 #[derive(Debug, Clone)]
 pub struct Chunk {
     length: u32,
-    chunk_type: ChunkType,
-    chunk_data: Vec<u8>,
+    ctype: ChunkType,
+    data: Vec<u8>,
     crc: u32,
 }
 
+#[allow(dead_code)]
 impl Chunk {
     pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
         let length = u32::try_from(data.len()).unwrap();
@@ -21,8 +22,8 @@ impl Chunk {
 
         Self {
             length,
-            chunk_type,
-            chunk_data: data,
+            ctype: chunk_type,
+            data,
             crc,
         }
     }
@@ -32,11 +33,11 @@ impl Chunk {
     }
 
     pub fn chunk_type(&self) -> &ChunkType {
-        &self.chunk_type
+        &self.ctype
     }
 
     pub fn data(&self) -> &[u8] {
-        &self.chunk_data
+        &self.data
     }
 
     pub fn crc(&self) -> u32 {
@@ -44,7 +45,7 @@ impl Chunk {
     }
 
     pub fn data_as_string(&self) -> Result<String> {
-        let s = std::str::from_utf8(&self.chunk_data)?;
+        let s = std::str::from_utf8(&self.data)?;
         Ok(s.to_string())
     }
 
@@ -52,8 +53,8 @@ impl Chunk {
         self.length
             .to_be_bytes()
             .iter()
-            .chain(self.chunk_type.bytes().iter())
-            .chain(self.chunk_data.iter())
+            .chain(self.ctype.bytes().iter())
+            .chain(self.data.iter())
             .chain(self.crc.to_be_bytes().iter())
             .copied()
             .collect()
@@ -85,21 +86,17 @@ impl TryFrom<&[u8]> for Chunk {
 
         Ok(Chunk {
             length,
-            chunk_type,
-            chunk_data,
+            ctype: chunk_type,
+            data: chunk_data,
             crc,
         })
     }
 }
 
 impl Display for Chunk {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        let message = str::from_utf8(&self.chunk_data).unwrap();
-        write!(
-            f,
-            "{} {} {} {}",
-            self.length, self.chunk_type, message, self.crc
-        )
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let message = str::from_utf8(&self.data).expect("Invalid UTF8 in message");
+        write!(f, "{} {} {} {}", self.length, self.ctype, message, self.crc)
     }
 }
 

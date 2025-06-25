@@ -1,5 +1,4 @@
 use std::{
-    fmt::Display,
     fs::{self, File, OpenOptions},
     io::Write,
 };
@@ -15,7 +14,7 @@ pub fn encode(
     output: Option<&String>,
 ) -> Result<()> {
     let data: Vec<u8> = fs::read(filename)?;
-    let mut png = Png::try_from(&data[..])?;
+    let mut png = Png::try_from(data.as_slice())?;
     let chunk = Chunk::new(chunk_type.clone(), message.as_bytes().to_vec());
     png.append_chunk(chunk);
     let mut ofile;
@@ -30,7 +29,7 @@ pub fn encode(
 
 pub fn decode(filename: &String, chunk_type: &str) -> Result<()> {
     let data: Vec<u8> = fs::read(filename)?;
-    let png = Png::try_from(&data[..])?;
+    let png = Png::try_from(data.as_slice())?;
     let chunk = png.chunk_by_type(chunk_type);
     match chunk {
         Some(chunk) => println!("{chunk}"),
@@ -41,7 +40,7 @@ pub fn decode(filename: &String, chunk_type: &str) -> Result<()> {
 
 pub fn remove(filename: &String, chunk_type: &str) -> Result<()> {
     let data: Vec<u8> = fs::read(filename)?;
-    let mut png = Png::try_from(&data[..])?;
+    let mut png = Png::try_from(data.as_slice())?;
     png.remove_first_chunk(chunk_type)?;
     let mut ofile = OpenOptions::new()
         .write(true)
@@ -53,7 +52,7 @@ pub fn remove(filename: &String, chunk_type: &str) -> Result<()> {
 
 pub fn print(filename: &String) -> Result<()> {
     let data: Vec<u8> = fs::read(filename)?;
-    let png = Png::try_from(&data[..])?;
+    let png = Png::try_from(data.as_slice())?;
     png.chunks()
         .iter()
         .for_each(|c| println!("{}", c.chunk_type()));

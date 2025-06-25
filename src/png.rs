@@ -9,6 +9,7 @@ pub struct Png {
     chunks: Vec<Chunk>,
 }
 
+#[allow(dead_code)]
 impl Png {
     pub const STANDARD_HEADER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
@@ -76,20 +77,21 @@ impl TryFrom<&[u8]> for Png {
             .copied()
             .collect();
         let mut rest: Vec<u8> = value.iter().skip(header.len()).copied().collect();
+        let header = <[u8; 8]>::try_from(header.as_slice())?;
         if header != Png::STANDARD_HEADER {
             return Err(anyhow!("Invalid PNG header."));
         }
 
         while rest.len() >= 8 {
             let length: Vec<u8> = rest.iter().take(U32_SIZE).copied().collect();
-            let length = <[u8; 4]>::try_from(&length[0..4])?;
+            let length = <[u8; 4]>::try_from(length.as_slice())?;
             let length = u32::from_be_bytes(length);
             let chunk: Vec<u8> = rest
                 .iter()
                 .take(length as usize + U32_SIZE * 3)
                 .copied()
                 .collect();
-            let chunk = Chunk::try_from(&chunk[..])?;
+            let chunk = Chunk::try_from(chunk.as_slice())?;
             chunks.push(chunk);
             rest = rest
                 .iter()
@@ -101,10 +103,7 @@ impl TryFrom<&[u8]> for Png {
         if !rest.is_empty() {
             return Err(anyhow!("Invalid data length."));
         }
-        Ok(Self {
-            header: <[u8; 8]>::try_from(&header[0..8]).unwrap(),
-            chunks,
-        })
+        Ok(Self { header, chunks })
     }
 }
 

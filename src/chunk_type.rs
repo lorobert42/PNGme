@@ -6,6 +6,7 @@ pub struct ChunkType {
     bytes: [u8; 4],
 }
 
+#[allow(dead_code)]
 impl ChunkType {
     pub fn bytes(&self) -> [u8; 4] {
         self.bytes
@@ -62,7 +63,7 @@ impl FromStr for ChunkType {
 
 impl Display for ChunkType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let res = String::from_utf8(self.bytes.to_vec()).unwrap();
+        let res = String::from_utf8(self.bytes.to_vec()).expect("Invalid UTF8 for Chunk_type");
         write!(f, "{res}")
     }
 }
